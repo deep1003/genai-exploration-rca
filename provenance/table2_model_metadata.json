@@ -1,0 +1,49 @@
+{
+  "source": "original_numeric_input.parquet",
+  "source_sha256": "f8c92f363044a1d4b1876ec7d3b67d6294108217bf3e199e77f64158fbeff398",
+  "source_rows": 513533,
+  "complete_rows": 510673,
+  "models": [
+    {
+      "model": "recovered_pooled",
+      "nobs": 510673,
+      "countries": 62,
+      "r_squared": 0.2113325326649873,
+      "absorbed_degrees": 0,
+      "unit": "patent-CPC row",
+      "fixed_effects": []
+    },
+    {
+      "model": "corrected_threeway_fe",
+      "nobs": 506311,
+      "countries": 60,
+      "r_squared": 0.26509386983240824,
+      "absorbed_degrees": 8659,
+      "unit": "patent-CPC row",
+      "fixed_effects": [
+        "year",
+        "country_code",
+        "cpc_code"
+      ],
+      "singletons_removed": 4362,
+      "independent_coefficient_max_error": 1.1102230246251565e-16
+    },
+    {
+      "model": "equal_cell_threeway_fe",
+      "nobs": 78615,
+      "countries": 60,
+      "r_squared": 0.05467603014136846,
+      "absorbed_degrees": 8121,
+      "unit": "country-CPC-year cell",
+      "fixed_effects": [
+        "year",
+        "country_code",
+        "cpc_code"
+      ],
+      "singletons_removed": 4900,
+      "independent_coefficient_max_error": 5.551115123125783e-17
+    }
+  ],
+  "historical_equivalence": false,
+  "inference": "Pooled column reproduces archived normal-reference clustered inference; FE columns use country-cluster CR1 and t(G-1)"
+}

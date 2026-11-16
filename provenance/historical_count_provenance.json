@@ -1,0 +1,10 @@
+{
+  "notebook": "Patent_analysis_LLM_1_Jupyter_notebook_11(en) (17)_1 (14) (9).ipynb",
+  "notebook_sha256": "4c848766eefb0ffc1f2aed7a5f410c3dd405e24ffdc5a7d4e10235bce7276aed",
+  "table3_cell": 289,
+  "table4_cell": 234,
+  "ratios_recomputed_from_integer_counts": true,
+  "table3_denominator": "US, CN, KR and EU only; LLM-first cohort; any observed current RCA indicator > 0; unique appl_id",
+  "table4_denominator": "US plus CN regular-expression occurrence counts, not unique matched patents",
+  "historical_cluster_numbers_retained": true
+}

@@ -1,0 +1,15 @@
+{
+  "row_level_input": "original_numeric_input.parquet",
+  "sha256": "f8c92f363044a1d4b1876ec7d3b67d6294108217bf3e199e77f64158fbeff398",
+  "rows": 513533,
+  "public": false,
+  "reason": "Redistribution rights for patent-provider inputs have not been confirmed.",
+  "other_exclusions": [
+    "original Word manuscript",
+    "full notebook outputs",
+    "patent-level embedding coordinates",
+    "personal addresses and inventor records",
+    "authentication data",
+    "full private workspace"
+  ]
+}
