@@ -29,6 +29,20 @@ for n in ['figure2','figure3a','figure3b','figure4','figure5','figure6a','figure
             x,y=np.asarray(line.get_xdata()),np.asarray(line.get_ydata())
             if len(x)!=len(y):continue
             records.extend({'axis':a,'series':j,'label':line.get_label(),'x':xx,'y':yy} for xx,yy in zip(x,y))
+    vertices=[];bars=[];axes=[]
+    for a,ax in enumerate(fig.axes):
+        axes.append({'axis':a,'xlim':list(ax.get_xlim()),'ylim':list(ax.get_ylim()),'x_ticks':list(map(float,ax.get_xticks())),'x_tick_labels':[t.get_text() for t in ax.get_xticklabels()]})
+        for j,collection in enumerate(ax.collections):
+            for k,path in enumerate(collection.get_paths()):
+                vertices.extend({'axis':a,'collection':j,'path':k,'vertex':q,'x':float(x),'y':float(y)} for q,(x,y) in enumerate(path.vertices))
+        for j,patch in enumerate(ax.patches):
+            if hasattr(patch,'get_height'):
+                bars.append({'axis':a,'patch':j,'x':patch.get_x(),'y':patch.get_y(),'width':patch.get_width(),'height':patch.get_height(),'rgba':json.dumps(patch.get_facecolor())})
+    for suffix,values in [('interval_paths',vertices),('bars',bars)]:
+        if values:
+            with (P/f'data/figure_series/{n}_{suffix}.csv').open('w',newline='') as f:
+                w=csv.DictWriter(f,fieldnames=list(values[0]));w.writeheader();w.writerows(values)
+    (P/f'data/figure_series/{n}_axes.json').write_text(json.dumps(axes,indent=2))
     if records:
         with (P/f'data/figure_series/{n}_lines.csv').open('w',newline='') as f:
             w=csv.DictWriter(f,fieldnames=['axis','series','label','x','y']);w.writeheader();w.writerows(records)
