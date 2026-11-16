@@ -1,6 +1,7 @@
 """Prepare an allowlisted public release; exclude licensed row-level inputs."""
 from pathlib import Path
-import csv,hashlib,json,pickle,re,shutil
+import csv,hashlib,json,pickle,re,shutil,sys
+from importlib.metadata import version,PackageNotFoundError
 import numpy as np
 import matplotlib
 matplotlib.use('Agg')
@@ -39,6 +40,11 @@ withheld={'row_level_input':source.name,'sha256':hashlib.sha256(source.read_byte
     'rows':513533,'public':False,'reason':'Redistribution rights for patent-provider inputs have not been confirmed.',
     'other_exclusions':['original Word manuscript','full notebook outputs','patent-level embedding coordinates','personal addresses and inventor records','authentication data','full private workspace']}
 (P/'provenance/withheld_inputs.json').write_text(json.dumps(withheld,indent=2))
+packages={}
+for package in ['numpy','pandas','scipy','statsmodels','pyhdfe','linearmodels','scikit-learn','matplotlib','pypdf','pypdfium2','reportlab','threadpoolctl']:
+    try:packages[package]=version(package)
+    except PackageNotFoundError:packages[package]='not installed in analysis runtime'
+(P/'provenance/analysis_environment.json').write_text(json.dumps({'python':sys.version.split()[0],'packages':packages,'scope':'Analysis and Matplotlib replay environment; PDF packaging also used a separate bundled runtime.'},indent=2))
 files=[]
 for f in sorted(P.rglob('*')):
     if not f.is_file() or '.git' in f.parts or f.name=='manifest.json':continue

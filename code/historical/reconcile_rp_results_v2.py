@@ -3,6 +3,7 @@ from pathlib import Path
 import ast,csv,difflib,hashlib,io,json,pickle,re,shutil
 import matplotlib
 matplotlib.use('Agg')
+matplotlib.rcParams.update({'pdf.fonttype':42,'ps.fonttype':42})
 import matplotlib.pyplot as plt
 from pypdf import PdfReader
 from reportlab.pdfbase import pdfmetrics
@@ -162,6 +163,51 @@ or control over the corresponding technologies.'''
         'or technological-control ranking. They motivate, rather than establish, an interpretation '
         'of convergence and diversification.',
         'Remove conflation of keyword frequencies, patent volumes and technological control',name)
+    text=revise(text,'Two binary outcomes are used.',
+        '\\citet{ref66} apply RCA-based country--technology indicators to AI specialization '
+        'and relate specialization to existing scientific and technological capabilities. '
+        'This supports interpreting RCA as relative technological specialization rather than '
+        'raw patent volume. Their transition-oriented measures are distinct from the present '
+        'next-year RCA indicator: without restricting current RCA to zero, it is not a pure '
+        'entry measure.\n\nTwo binary outcomes are used.',
+        'Add verified Chun, Hur and Hwang (2024) as RCA measurement precedent, not evidence for an inverted U',name)
+    text=revise(text,'and measures emerging\nadvantage.',
+        'and measures subsequent specialization, not exclusively entry.',
+        'Distinguish next-year RCA status from entry conditional on current non-specialization',name)
+    availability=r'''Aggregate tables, regression outputs, non-identifying plot series, figure and
+analysis code, and provenance are publicly available at
+\url{https://github.com/deep1003/genai-exploration-rca}.
+The project page and access information are at
+\url{https://deep1003.github.io/research/genai-exploration-rca.html}.
+Row-level patent-provider inputs, full notebook outputs and personal records
+are not redistributed because applicable provider rights have not been confirmed.
+Re-estimation from source observations requires access under the relevant providers'
+terms. The public release supports inspection of aggregate evidence and code,
+but does not constitute a complete historical replication package.'''
+    start=text.index(r'\section{Data availability}')
+    end=text.index(r'\begin{thebibliography}',start)
+    # The author-review version has acknowledgements between availability and references.
+    stop=text.find(r'\section*{Acknowledgements}',start,end)
+    if stop!=-1:end=stop
+    heading_end=text.index('\n',start)
+    text=revise(text,text[heading_end+1:end],availability+'\n\n',
+        'Link the public aggregate-data and code release, with explicit source-input restrictions',name)
+    reference=r'''\bibitem[Chun et al.(2024)]{ref66}
+Chun, Y., Hur, J., Hwang, J., 2024. AI technology specialization and national competitiveness.
+PLoS ONE 19(4), e0301091. \url{https://doi.org/10.1371/journal.pone.0301091}.
+
+'''
+    changes.append(dict(file=name,before='',after=reference,reason='Add reference verified against the PLOS article and DOI'))
+    text=text.replace(r'\end{thebibliography}',reference+r'\end{thebibliography}')
+    bibliography=text.split(r'\begin{thebibliography}{99}\raggedright')[1].split(r'\end{thebibliography}')[0]
+    blocks=re.findall(r'\\bibitem\[.*?(?=\\bibitem\[|\Z)',bibliography,re.S)
+    bykey={re.search(r'\\bibitem\[.*?\]\{([^}]+)\}',b,re.S)[1]:b for b in blocks}
+    used=[]
+    for keys in re.findall(r'\\cite[pt]\{([^}]+)\}',text.split(r'\begin{thebibliography}')[0]):
+        for key in keys.split(','):
+            if key not in used:used.append(key)
+    assert len(bykey)==66 and set(used)==set(bykey)
+    text=text.replace(bibliography,'\n'+''.join(bykey[k] for k in used))
     # Replace long provenance notes with concise measurement notes and explicit separation.
     text=re.sub(r'\\par\\smallskip\\raggedright\\footnotesize\\emph\{Notes:\} .*?(?=\n\\end\{table\})',lambda m:
         r'\par\vspace{\baselineskip}\noindent\raggedright\footnotesize\emph{Notes:} '
@@ -206,6 +252,9 @@ or control over the corresponding technologies.'''
         '\\caption{U.S. and Chinese shares of keyword occurrences in Clusters 1 and 4, per cent.}',
         'Correct Table 4 caption to the actual counting unit',name)
     text=text.replace(r'\journal{Research Policy}',r'\newcommand{\figurenotes}[1]{\par\vspace{\baselineskip}\noindent\begin{minipage}{\linewidth}\small\emph{Notes:} #1\end{minipage}}'+'\n'+r'\journal{Research Policy}')
+    text=revise(text,r'\vspace{\baselineskip}',r'\vspace{.5\baselineskip}',
+        'Latest request: halve the explicit Notes separation',name)
+    text=text.replace(r'\setlength{\LTcapwidth}{\linewidth}',r'\setlength{\LTcapwidth}{\linewidth}'+'\n'+r'\setlength{\LTpost}{0pt}')
     text=text.replace(OLD+'/figures/',NEW+'/figures/')
     abstract=text.split(r'\begin{abstract}')[1].split(r'\end{abstract}')[0]
     assert len(abstract.split())<=250,len(abstract.split())
@@ -225,7 +274,7 @@ functions=[n for n in tree.body if isinstance(n,ast.FunctionDef) and n.name=='ge
 import numpy as np
 env={'hashlib':hashlib,'np':np};exec(compile(ast.Module(body=functions,type_ignores=[]),'geometry','exec'),env)
 audit=[]
-for panel in ['figure3b','figure4']:
+for panel in ['figure2','figure3b','figure4','figure6a','figure6b']:
     with (R/f'02_figures/13_nature_labels_20261116/{panel}_styled.pkl').open('rb') as f:fig=pickle.load(f)
     for ax in fig.axes:ax.set_title('')
     fig.canvas.draw();box=fig.get_tightbbox(fig.canvas.get_renderer()) if panel=='figure3b' else None
@@ -233,15 +282,20 @@ for panel in ['figure3b','figure4']:
     for ax in fig.axes:
         leg=ax.get_legend()
         if panel=='figure3b':leg.remove()
-        else:
-            leg.set_loc('upper right');leg.set_bbox_to_anchor((1,1),transform=ax.transAxes)
+        elif panel in ['figure2','figure4']:
+            leg.set_loc('upper left' if panel=='figure2' else 'upper right')
+            leg.set_bbox_to_anchor((0,1) if panel=='figure2' else (1,1),transform=ax.transAxes)
             leg.set_frame_on(True);leg.get_frame().set_facecolor('white');leg.get_frame().set_alpha(.95)
+        else:ax.set_xlabel('');ax.set_ylabel('')
+    if panel.startswith('figure6'):
+        fig.canvas.draw();box=fig.get_tightbbox(fig.canvas.get_renderer())
     assert before==env['geometry'](fig)
     assert positions==[ax.get_position().bounds for ax in fig.axes]
     dest=O/'figures'/(panel+'.pdf');fig.savefig(dest,bbox_inches=box)
     fig.savefig(D/(panel+'_600dpi.png'),dpi=600,bbox_inches=box)
     plt.close(fig);audit.append({'panel':panel,'data_colors_limits_unchanged':True,'axes_positions_unchanged':True,'geometry_sha256':before})
 shutil.copy2(O/'figures/figure4.pdf',O/'figures/Figure_04.pdf')
+shutil.copy2(O/'figures/figure2.pdf',O/'figures/Figure_02.pdf')
 t=ast.parse((R/'06_scripts/package_all_nine_replots.py').read_text());t.body=[n for n in t.body if isinstance(n,(ast.Import,ast.ImportFrom,ast.FunctionDef)) and not (isinstance(n,ast.ImportFrom) and n.module=='pypdf._configuration')]
 e={};exec(compile(t,'composite','exec'),e)
 pdfmetrics.registerFont(TTFont('PanelArialBold','/System/Library/Fonts/Supplemental/Arial Bold.ttf'))
@@ -250,5 +304,26 @@ def annotate(page,labels):
     for label,x,y in labels:c.drawString(x,y,label)
     c.save();b.seek(0);page.merge_page(PdfReader(b).pages[0])
 e['annotate']=annotate;e['composite']([O/'figures/figure3a.pdf',O/'figures/figure3b.pdf'],O/'figures/Figure_03.pdf')
+from pypdf import PageObject,PdfWriter,Transformation
+parts=[PdfReader(O/'figures'/(n+'.pdf')).pages[0] for n in ['figure6a','figure6b']]
+common_h=max(float(p.mediabox.height) for p in parts);gutter=18
+widths=[float(p.mediabox.width)*common_h/float(p.mediabox.height) for p in parts]
+scale=(576-gutter)/sum(widths);panel_h=common_h*scale
+panel=PageObject.create_blank_page(width=576,height=panel_h+18);x=0;labels=[]
+for i,p in enumerate(parts):
+    panel.merge_transformed_page(p,Transformation().scale(scale*common_h/float(p.mediabox.height)).translate(tx=x))
+    labels.append((f'({chr(97+i)})',x+2,panel_h+4));x+=widths[i]*scale+gutter
+annotate(panel,labels)
+w=float(panel.mediabox.width)+26;h=float(panel.mediabox.height)+24
+page=PageObject.create_blank_page(width=w,height=h)
+page.merge_transformed_page(panel,Transformation().translate(tx=26,ty=24))
+pdfmetrics.registerFont(TTFont('PanelArial','/System/Library/Fonts/Supplemental/Arial.ttf'))
+b=io.BytesIO();c=canvas.Canvas(b,pagesize=(w,h),initialFontName='PanelArial');c.setFont('PanelArial',11)
+c.drawCentredString(26+float(panel.mediabox.width)/2,5,'Standardised technological distance')
+c.saveState();c.translate(11,24+float(panel.mediabox.height)/2);c.rotate(90)
+c.drawCentredString(0,0,'Predicted RCA at year t + 1');c.restoreState();c.save();b.seek(0)
+page.merge_page(PdfReader(b).pages[0]);writer=PdfWriter();writer.add_page(page)
+with (O/'figures/Figure_06.pdf').open('wb') as f:writer.write(f)
+audit.append({'figure':6,'shared_x_axis_title':True,'shared_y_axis_title':True,'panel_data_and_axes_unchanged':True})
 (D/'figure_legend_audit.json').write_text(json.dumps(audit,indent=2))
 print(json.dumps({'release':NEW,'changes':len(changes),'abstract_words':len(abstract.split()),'figure_audit':audit},indent=2))

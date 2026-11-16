@@ -1,0 +1,18 @@
+{
+  "python": "3.13.9",
+  "packages": {
+    "numpy": "2.5.1",
+    "pandas": "3.0.6",
+    "scipy": "1.18.0",
+    "statsmodels": "0.15.0",
+    "pyhdfe": "0.2.0",
+    "linearmodels": "6.1",
+    "scikit-learn": "1.9.0",
+    "matplotlib": "3.11.2",
+    "pypdf": "6.7.4",
+    "pypdfium2": "5.9.0",
+    "reportlab": "4.5.1",
+    "threadpoolctl": "3.5.0"
+  },
+  "scope": "Analysis and Matplotlib replay environment; PDF packaging also used a separate bundled runtime."
+}
